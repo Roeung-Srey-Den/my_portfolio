@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 
 // real screenshots per project
@@ -28,12 +28,50 @@ const projectLinks = {
   Construction: 'https://roeung-srey-den.github.io/construction_project/',
 };
 
-function ProjectCard({ project, viewMoreLabel }) {
+/* ---------- Reusable reveal-on-scroll wrapper (replays every scroll) ---------- */
+function Reveal({ children, className = '', delay = 0, direction = 'up' }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setVisible(entry.isIntersecting);
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  const hiddenTransform =
+    direction === 'left'
+      ? '-translate-x-10'
+      : direction === 'right'
+      ? 'translate-x-10'
+      : 'translate-y-10';
+
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: visible ? `${delay}ms` : '0ms' }}
+      className={`transition-all duration-700 ease-out ${
+        visible ? 'translate-x-0 translate-y-0 opacity-100' : `${hiddenTransform} opacity-0`
+      } ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function ProjectCard({ project, viewMoreLabel, direction }) {
   const [active, setActive] = useState(0);
 
   return (
     <section id="project">
-    <div className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-lg md:flex-row">
+    <Reveal direction={direction} className="flex w-full flex-col overflow-hidden rounded-2xl bg-white shadow-lg md:flex-row">
       {/* Text side */}
       <div className="flex flex-1 flex-col justify-center gap-4 p-8 md:p-10">
         <h3 className="font-serif text-2xl font-bold text-gray-800">{project.title}</h3>
@@ -42,7 +80,7 @@ function ProjectCard({ project, viewMoreLabel }) {
           href={project.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="w-fit rounded-full border border-gray-800 px-6 py-2 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-800 hover:text-white"
+          className="w-fit rounded-full border border-gray-800 px-6 py-2 text-sm font-medium text-gray-800 transition-all hover:scale-105 hover:bg-gray-800 hover:text-white"
         >
           {viewMoreLabel}
         </a>
@@ -56,7 +94,7 @@ function ProjectCard({ project, viewMoreLabel }) {
             <button
               key={index}
               type="button"
-              onClick={() => setActive(index)}
+              onMouseEnter={() => setActive(index)}
               aria-label={`${project.title} screenshot ${index + 1}`}
               style={{
                 flexGrow: isActive ? 4 : 1,
@@ -76,7 +114,7 @@ function ProjectCard({ project, viewMoreLabel }) {
           );
         })}
       </div>
-    </div>
+    </Reveal>
     </section>
   );
 }
@@ -93,20 +131,27 @@ function Project() {
 
   return (
     <div className="flex flex-col items-center py-10">
-      <div className="flex flex-col items-center">
+      <Reveal className="flex flex-col items-center">
         <div className="font-serif text-5xl font-bold text-gray-800">{t.project.heading}</div>
         <div className="mt-3 h-1 w-24 bg-yellow-200"></div>
-      </div>
+      </Reveal>
 
       <div className="mt-10 flex w-full max-w-4xl flex-col gap-8 px-6 md:px-0">
         {projects.map((project, index) => (
-          <ProjectCard key={index} project={project} viewMoreLabel={t.project.viewMore} />
+          <ProjectCard
+            key={index}
+            project={project}
+            viewMoreLabel={t.project.viewMore}
+            direction={index % 2 === 0 ? 'left' : 'right'}
+          />
         ))}
       </div>
 
-      <p className="mt-8 text-sm text-gray-500">
-         {t.project.github}
-      </p>
+      <Reveal delay={200}>
+        <p className="mt-8 text-sm text-gray-500">
+          {t.project.github}
+        </p>
+      </Reveal>
     </div>
   );
 }

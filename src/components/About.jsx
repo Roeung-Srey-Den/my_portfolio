@@ -5,6 +5,37 @@ import { useLanguage } from '../context/LanguageContext';
 
 const AUTO_ROTATE_MS = 3500;
 
+/* ---------- Reusable reveal-on-scroll wrapper (replays every scroll) ---------- */
+function Reveal({ children, className = '', delay = 0 }) {
+    const ref = useRef(null);
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        const node = ref.current;
+        if (!node) return;
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                setVisible(entry.isIntersecting);
+            },
+            { threshold: 0.2 }
+        );
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, []);
+
+    return (
+        <div
+            ref={ref}
+            style={{ transitionDelay: visible ? `${delay}ms` : '0ms' }}
+            className={`transition-all duration-700 ease-out ${
+                visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+            } ${className}`}
+        >
+            {children}
+        </div>
+    );
+}
+
 /* ---------- Single stacked card ---------- */
 function StackCard({ title, rows, position }) {
     // position: 0 = front (visible/active), 1 = middle, 2 = back
@@ -53,16 +84,13 @@ function StackedCarousel({ cards }) {
     const containerRef = useRef(null);
     const [visible, setVisible] = useState(false);
 
-    // reveal on scroll (same behaviour as before)
+    // reveal on scroll, replays every time it enters/exits the viewport
     useEffect(() => {
         const node = containerRef.current;
         if (!node) return;
         const observer = new IntersectionObserver(
             ([entry]) => {
-                if (entry.isIntersecting) {
-                    setVisible(true);
-                    observer.unobserve(node);
-                }
+                setVisible(entry.isIntersecting);
             },
             { threshold: 0.2 }
         );
@@ -75,14 +103,14 @@ function StackedCarousel({ cards }) {
         setActive(0);
     }, [cards]);
 
-    // auto-rotate the stack (paused while hovered)
+    // auto-rotate the stack (paused while hovered, or while offscreen)
     useEffect(() => {
-        if (paused) return;
+        if (paused || !visible) return;
         const timer = setInterval(() => {
             setActive((prev) => (prev + 1) % cards.length);
         }, AUTO_ROTATE_MS);
         return () => clearInterval(timer);
-    }, [cards.length, paused]);
+    }, [cards.length, paused, visible]);
 
     return (
         <div
@@ -116,31 +144,33 @@ function About(props) {
     return (
         <section id="about">
         <div className="flex flex-col items-center px-4 py-8 sm:px-6 sm:py-10">
-            <div className="flex flex-col items-center">
+            <Reveal className="flex flex-col items-center">
                 <div className="font-serif text-2xl font-bold text-gray-800 sm:text-3xl md:text-4xl">
                     {t.about.heading}
                 </div>
-                <div className="mt-3 h-1 w-16 bg-yellow-200 sm:w-20 md:w-24"></div>
-            </div>
+                <div className="mt-3 h-1 w-16 bg-yellow-200 transition-all duration-700 sm:w-20 md:w-24"></div>
+            </Reveal>
 
-            <div
-                style={{ backgroundImage: `url(${Angkor})` }}
-                className="mt-6 w-full max-w-5xl bg-cover bg-center bg-no-repeat px-3 py-6 text-center sm:mt-8 sm:px-6 sm:py-10"
-            >
-                <p className="mx-auto max-w-4xl text-xs leading-relaxed text-gray-800 sm:text-sm">
-                    {t.about.bio}
-                </p>
-            </div>
+            <Reveal delay={150} className="mt-6 w-full max-w-5xl sm:mt-8">
+                <div
+                    style={{ backgroundImage: `url(${Angkor})` }}
+                    className="bg-cover bg-center bg-no-repeat px-3 py-6 text-center sm:px-6 sm:py-10"
+                >
+                    <p className="mx-auto max-w-4xl text-xs leading-relaxed text-gray-800 sm:text-sm">
+                        {t.about.bio}
+                    </p>
+                </div>
+            </Reveal>
 
-          <div className="mt-5 flex justify-center sm:mt-6">
-    <a
-        href={CV}
-        download="Roeung_Srey_Den_CV.pdf"
-        className="rounded-full bg-yellow-300 px-6 py-2 text-sm font-semibold text-gray-900 shadow-sm transition-colors hover:bg-yellow-400 sm:px-8 sm:py-2.5 sm:text-base"
-    >
-        {t.about.downloadCv}
-    </a>
-</div>
+            <Reveal delay={300} className="mt-5 flex justify-center sm:mt-6">
+                <a
+                    href={CV}
+                    download="Roeung_Srey_Den_CV.pdf"
+                    className="rounded-full bg-yellow-300 px-6 py-2 text-sm font-semibold text-gray-900 shadow-sm transition-all hover:scale-105 hover:bg-yellow-400 hover:shadow-md sm:px-8 sm:py-2.5 sm:text-base"
+                >
+                    {t.about.downloadCv}
+                </a>
+            </Reveal>
 
             <div className="mt-8 flex w-full max-w-5xl justify-center sm:mt-10 md:mt-12">
                 <StackedCarousel cards={t.about.cards} />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import word from '../assets/images/skill/word.png';
 import bootstrap from '../assets/images/skill/bootstrap.png';
@@ -27,10 +27,47 @@ import nuxt from '../assets/images/skill/nuxt.png';
 import laravel from '../assets/images/skill/Laravel.png';
 import khmer from '../assets/images/skill/khmer.png';
 import javascript from '../assets/images/skill/javascript.png';
-// Reusable icon item: logo image + label underneath
-function SkillIcon({ src, label, size = 'h-12 w-12' }) {
+
+/* ---------- Reusable reveal-on-scroll wrapper (replays every scroll) ---------- */
+function Reveal({ children, className = '', delay = 0 }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setVisible(entry.isIntersecting);
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div className="flex flex-col items-center gap-2">
+    <div
+      ref={ref}
+      style={{ transitionDelay: visible ? `${delay}ms` : '0ms' }}
+      className={`transition-all duration-700 ease-out ${
+        visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+      } ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+// Reusable icon item: logo image + label underneath
+function SkillIcon({ src, label, size = 'h-12 w-12', delay = 0, visible }) {
+  return (
+    <div
+      style={{ transitionDelay: visible ? `${delay}ms` : '0ms' }}
+      className={`flex flex-col items-center gap-2 transition-all duration-500 ease-out hover:-translate-y-1 hover:scale-110 ${
+        visible ? 'translate-y-0 scale-100 opacity-100' : 'translate-y-4 scale-90 opacity-0'
+      }`}
+    >
       <img src={src} alt={label} className={`${size} object-contain`} />
       <span className="text-xs font-medium tracking-wide text-gray-600">
         {label}
@@ -39,14 +76,40 @@ function SkillIcon({ src, label, size = 'h-12 w-12' }) {
   );
 }
 
-// Category heading + row of icons
+// Category heading + row of icons, reveals as a group with staggered icons
 function SkillCategory({ title, children }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setVisible(entry.isIntersecting);
+      },
+      { threshold: 0.15 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  // clone icon children so each gets a staggered delay + the group's visible state
+  const items = React.Children.map(children, (child, i) =>
+    React.cloneElement(child, { delay: i * 90, visible })
+  );
+
   return (
-    <div className="mb-10">
+    <div
+      ref={ref}
+      className={`mb-10 transition-all duration-700 ease-out ${
+        visible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+      }`}
+    >
       <h3 className="mb-5 text-sm font-bold uppercase tracking-wide text-gray-900">
         {title}
       </h3>
-      <div className="flex flex-wrap items-start gap-8">{children}</div>
+      <div className="flex flex-wrap items-start gap-8">{items}</div>
     </div>
   );
 }
@@ -58,11 +121,11 @@ function Skill() {
   return (
     <section className="mx-auto max-w-4xl px-6 py-16">
       {/* Section title */}
-      <div className="mb-14 text-center">
+      <Reveal className="mb-14 text-center">
         <h2 className="inline-block border-b-4 pb-1 text-2xl font-bold text-gray-900" style={{ borderColor: '#F5DC5B' }}>
           {t.skill.heading}
         </h2>
-      </div>
+      </Reveal>
 
       {/* Microsoft Office */}
       <SkillCategory title={c.office}>

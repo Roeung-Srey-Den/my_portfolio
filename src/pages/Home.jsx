@@ -21,6 +21,16 @@ function Home(props) {
 
     return (
         <div>
+            <style>{`
+                @keyframes spin-ring {
+                    from { transform: rotate(0deg); }
+                    to { transform: rotate(360deg); }
+                }
+                .animate-spin-ring {
+                    animation: spin-ring 2.5s linear infinite;
+                }
+            `}</style>
+
              <div className="relative h-137 overflow-hidden bg-white">
       {/* Diagonal yellow background panel */}
       <div
@@ -34,16 +44,30 @@ function Home(props) {
       <div className="relative mx-auto flex min-h-screen max-w-6xl flex-col items-center justify-center gap-12 px-6 py-16 md:flex-row md:gap-16 md:px-12 pb-200 sm:pt-19">
         {/* Left column: photo */}
         <div className="flex flex-shrink-0 flex-col items-center gap-4">
-          <div
-            className="flex h-52 w-52 items-center justify-center rounded-full border-[6px] bg-white p-2 md:h-60 md:w-60"
-            style={{ borderColor: 'rgba(245, 220, 91, 0.7)' }}
-          >
-            <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-gray-100">
-               <img src={Profile} className='w-53 pt-19' />
-              <svg viewBox="0 0 200 200" className="h-full w-full text-gray-300" fill="currentColor">
-                <circle cx="100" cy="75" r="40" />
-                <path d="M30 190c0-45 31-75 70-75s70 30 70 75z" />
-              </svg>
+          <div className="relative flex h-52 w-52 items-center justify-center rounded-full md:h-60 md:w-60">
+            {/* Rotating "running" ring */}
+            <div
+              className="absolute inset-0 rounded-full animate-spin-ring"
+              style={{
+                background: 'conic-gradient(from 0deg, transparent 0deg, #F5DC5B 60deg, transparent 140deg, transparent 360deg)',
+                padding: '6px',
+              }}
+            />
+            {/* Static soft base ring (keeps the subtle circle visible when the bright arc passes) */}
+            <div
+              className="absolute inset-0 rounded-full border-[6px]"
+              style={{ borderColor: 'rgba(245, 220, 91, 0.35)' }}
+            />
+
+            {/* White inner circle + photo */}
+            <div className="relative flex h-[calc(100%-12px)] w-[calc(100%-12px)] items-center justify-center rounded-full bg-white p-2">
+              <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-gray-100">
+                <img src={Profile} className='w-53 pt-19' alt="Profile" />
+                <svg viewBox="0 0 200 200" className="h-full w-full text-gray-300" fill="currentColor">
+                  <circle cx="100" cy="75" r="40" />
+                  <path d="M30 190c0-45 31-75 70-75s70 30 70 75z" />
+                </svg>
+              </div>
             </div>
           </div>
  
